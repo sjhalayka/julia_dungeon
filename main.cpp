@@ -137,8 +137,6 @@ int main(void)
 
 			const size_t upper_index = (size_t)upper_sample_y * x_res + x;
 
-
-
 			if (magnitudes[array_of_images_index] < threshold)
 				array_of_images[array_of_images_index] = floor_tile;
 			else
@@ -149,24 +147,12 @@ int main(void)
 			else
 				array_of_light_blockers[array_of_images_index] = light_blocking_on;
 
-
-
-
-
 			if (magnitudes[array_of_images_index] < threshold &&
 				magnitudes[upper_index] >= threshold)
 			{
 				array_of_images[upper_index] = wall;
 				array_of_light_blockers[upper_index] = wall_light_blocking;
 			}
-
-	
-			//if ((array_of_images[array_of_images_index] == floor_tile) &&
-			//	()
-			//{
-
-			//}
-
 		}
 	}
 
