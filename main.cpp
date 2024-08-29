@@ -40,6 +40,38 @@ int main(void)
 		return -1;
 	}
 
+
+
+
+
+	Mat wall = imread("wall.png", IMREAD_UNCHANGED);
+
+	if (wall.empty() || wall.channels() != 4)
+	{
+		cout << "wall.png must be a 32-bit PNG" << endl;
+		return -1;
+	}
+
+	Mat wall_light_blocking = imread("wall_light_blocking.png", IMREAD_UNCHANGED);
+
+	if (wall_light_blocking.empty() || wall_light_blocking.channels() != 4)
+	{
+		cout << "wall_light_blocking.png must be a 32-bit PNG" << endl;
+		return -1;
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
 	Mat input_mat(Size(background_tile_size, background_tile_size), CV_32FC4);
 	input_mat = Scalar(0, 0, 0, 1);
 
@@ -53,12 +85,12 @@ int main(void)
 
 
 
-	const float x_grid_max = 5.3/2.0;
+	const float x_grid_max = 5.3f/2.0f;
 	const float x_grid_min = -x_grid_max;
 	const size_t x_res = 53;
 	const complex<float> x_step_size((x_grid_max - x_grid_min) / (x_res - 1), 0);
 
-	const float y_grid_max = 2.9/2.0;
+	const float y_grid_max = 2.9f/2.0f;
 	const float y_grid_min = -y_grid_max;
 	const size_t y_res = 29;
 	const complex<float> y_step_size(0, (y_grid_max - y_grid_min) / (y_res - 1));
@@ -69,27 +101,19 @@ int main(void)
 
 	complex<float> Z(x_grid_min, y_grid_min);
 
-	vector< complex<float> > trajectory_points;
-
+	vector<float> magnitudes(x_res * y_res);
 
 	for (size_t y = 0; y < y_res; y++, Z += y_step_size, Z.real(x_grid_min))
 	{
 		for (size_t x = 0; x < x_res; x++, Z += x_step_size)
 		{
 			const size_t array_of_images_index = y * x_res + x;
-
+			vector< complex<float> > trajectory_points;
 			float magnitude = iterate_2d(trajectory_points, Z, C, max_iterations, threshold);
 
-			if (magnitude < threshold)
-				array_of_images[array_of_images_index] = floor_tile;
-			else
-				array_of_images[array_of_images_index] = floor_empty;
 
-			if (magnitude < threshold)
-				array_of_light_blockers[array_of_images_index] = light_blocking_off;
-			else
-				array_of_light_blockers[array_of_images_index] = light_blocking_on;
 
+			magnitudes[array_of_images_index] = magnitude;
 
 			if (magnitude < threshold)
 				cout << " *";
@@ -103,20 +127,59 @@ int main(void)
 
 	cout << endl;
 
+	for (int y = 0; y < y_res; y++)
+	{
+		for (int x = 0; x < x_res; x++)
+		{
+			float upper_sample_y = glm::clamp((float)y - 1.0f, 0.0f, (float)y_res - 1.0f);
+
+			const size_t array_of_images_index = y * x_res + x;
+
+			const size_t upper_index = (size_t)upper_sample_y * x_res + x;
 
 
 
+			if (magnitudes[array_of_images_index] < threshold)
+				array_of_images[array_of_images_index] = floor_tile;
+			else
+				array_of_images[array_of_images_index] = floor_empty;
+
+			if (magnitudes[array_of_images_index] < threshold)
+				array_of_light_blockers[array_of_images_index] = light_blocking_off;
+			else
+				array_of_light_blockers[array_of_images_index] = light_blocking_on;
+
+
+
+
+
+			if (magnitudes[array_of_images_index] < threshold &&
+				magnitudes[upper_index] >= threshold)
+			{
+				array_of_images[upper_index] = wall;
+				array_of_light_blockers[upper_index] = wall_light_blocking;
+			}
+
+	
+			//if ((array_of_images[array_of_images_index] == floor_tile) &&
+			//	()
+			//{
+
+			//}
+
+		}
+	}
 
 
 
 
 	cv::Mat image_collage = imageCollage(array_of_images, x_tiles, y_tiles);
 
-	imwrite("out.png", image_collage * 255.0);
+	imwrite("input.png", image_collage * 255.0);
 
 	cv::Mat light_blocking_collage = imageCollage(array_of_light_blockers, x_tiles, y_tiles);
 
-	imwrite("light_blocker.png", light_blocking_collage * 255.0);
+	imwrite("input_light_blocking.png", light_blocking_collage * 255.0);
 
 
 
