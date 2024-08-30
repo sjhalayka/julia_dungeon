@@ -109,8 +109,13 @@ int main(void)
 		{
 			const size_t array_of_images_index = y * x_res + x;
 			vector< complex<float> > trajectory_points;
-			float magnitude = iterate_2d(trajectory_points, Z, C, max_iterations, threshold);
-
+			
+			float magnitude = 0;
+			
+			if (x == 0 || x == x_res - 1 || y == 0 || y == y_res - 1)
+				magnitude = threshold + 1.0f;
+			else
+				magnitude = iterate_2d(trajectory_points, Z, C, max_iterations, threshold);
 
 
 			magnitudes[array_of_images_index] = magnitude;
